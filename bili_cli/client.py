@@ -629,7 +629,7 @@ async def get_audio_url(bvid: str, credential: Credential | None = None) -> str:
     download_data = await _call_api("获取下载地址", v.get_download_url(page_index=0))
     detector = VideoDownloadURLDataDetecter(download_data)
     streams = detector.detect_best_streams(
-        audio_max_quality=AudioQuality._64K,
+        audio_min_quality=AudioQuality._192K,
         no_dolby_audio=True,
         no_hires=True,
     )
