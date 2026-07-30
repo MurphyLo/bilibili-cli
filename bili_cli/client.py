@@ -623,7 +623,7 @@ _DOWNLOAD_HEADERS = {
 
 async def get_audio_url(bvid: str, credential: Credential | None = None) -> str:
     """Get the best audio stream URL for a video (DASH preferred)."""
-    from bilibili_api.video import AudioQuality, VideoDownloadURLDataDetecter
+    from bilibili_api.video import AudioQuality, VideoCodecs, VideoDownloadURLDataDetecter
 
     v = video.Video(bvid=bvid, credential=credential)
     download_data = await _call_api("获取下载地址", v.get_download_url(page_index=0))
@@ -632,6 +632,7 @@ async def get_audio_url(bvid: str, credential: Credential | None = None) -> str:
         audio_min_quality=AudioQuality._192K,
         no_dolby_audio=True,
         no_hires=True,
+        codecs=[VideoCodecs.AV1, VideoCodecs.AVC, VideoCodecs.HEV],
     )
 
     if detector.check_flv_mp4_stream():
