@@ -43,6 +43,45 @@ def _normalize_url(url: object) -> str:
     return url.strip()
 
 
+def _duration_seconds(video: dict[str, Any]) -> int:
+    """Read duration from either `duration` (seconds) or `length` ("08:51")."""
+    for key in ("duration", "length"):
+        raw = video.get(key)
+        if raw in (None, ""):
+            continue
+        if isinstance(raw, str) and ":" in raw:
+            try:
+                total = 0
+                for part in raw.split(":"):
+                    total = total * 60 + int(part)
+                return total
+            except ValueError:
+                continue
+        seconds = _to_int(raw, -1)
+        if seconds >= 0:
+            return seconds
+    return 0
+
+
+def _charging_flags(video: dict[str, Any]) -> tuple[bool | None, int | None, str]:
+    """Extract charging-exclusive markers, which differ per upstream endpoint.
+
+    Returns (exclusive, type, badge); None means the endpoint does not report it.
+    """
+    if "is_charging_arc" in video:
+        # space/wbi/arc/search: type 1 = 充电专属, 2 = 抢先看
+        return (
+            bool(video.get("is_charging_arc")),
+            _to_int(video.get("elec_arc_type"), 0),
+            video.get("elec_arc_badge") or "",
+        )
+    if "is_upower_exclusive" in video:
+        # web-interface/view reports a single merged flag and cannot tell
+        # 充电专属 from 抢先看, so the type stays unknown.
+        return bool(video.get("is_upower_exclusive")), None, ""
+    return None, None, ""
+
+
 def normalize_user(info: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": str(info.get("mid", "")),
@@ -65,7 +104,8 @@ def normalize_relation(info: dict[str, Any]) -> dict[str, Any]:
 def normalize_video_summary(video: dict[str, Any]) -> dict[str, Any]:
     owner = video.get("owner", {}) if isinstance(video.get("owner"), dict) else {}
     stat = video.get("stat", {}) if isinstance(video.get("stat"), dict) else {}
-    duration_seconds = _to_int(video.get("duration"), _to_int(video.get("length"), 0))
+    duration_seconds = _duration_seconds(video)
+    charging_exclusive, charging_type, charging_badge = _charging_flags(video)
     url = ""
     if isinstance(video.get("bvid"), str) and video.get("bvid"):
         url = f"https://www.bilibili.com/video/{video['bvid']}"
@@ -80,9 +120,12 @@ def normalize_video_summary(video: dict[str, Any]) -> dict[str, Any]:
         "duration": _format_duration(duration_seconds),
         "url": url,
         "owner": {
-            "id": str(owner.get("mid", owner.get("id", ""))),
-            "name": owner.get("name", owner.get("uname", "")),
+            "id": str(owner.get("mid") or owner.get("id") or video.get("mid") or ""),
+            "name": owner.get("name") or owner.get("uname") or video.get("author") or "",
         },
+        "charging_exclusive": charging_exclusive,
+        "charging_type": charging_type,
+        "charging_badge": charging_badge,
         "stats": {
             "view": _to_int(stat.get("view", video.get("play", 0)), 0),
             "danmaku": _to_int(stat.get("danmaku"), 0),

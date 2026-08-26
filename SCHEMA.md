@@ -30,6 +30,9 @@ error:
 - `whoami` returns `data.user` and `data.relation`
 - `video` returns `data.video`, `data.subtitle`, `data.ai_summary`, `data.comments`, `data.related`, and `data.warnings`
 - write commands return normalized action payloads with `data.success` and `data.action`
+- video summaries carry `charging_exclusive`, `charging_type` and `charging_badge`;
+  `charging_type` is `1` (充电专属) or `2` (抢先看), and `null` on endpoints that
+  report only a merged flag (`video`) or nothing at all (`hot`, `rank`)
 
 ## Error Codes
 
