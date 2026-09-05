@@ -8,6 +8,20 @@ from bilibili_api.utils.network import Credential
 os.environ.setdefault("OUTPUT", "rich")
 
 
+@pytest.fixture(autouse=True)
+def isolate_credential_file(tmp_path, monkeypatch):
+    """Keep the test suite away from the real ~/.bilibili-cli/credential.json.
+
+    get_credential() deletes the credential file when validation says the
+    session expired, so a test that mocks _validate_credential without also
+    mocking clear_credential would log the developer out for real.
+    """
+    import bili_cli.auth as auth
+
+    monkeypatch.setattr(auth, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(auth, "CREDENTIAL_FILE", tmp_path / "credential.json")
+
+
 @pytest.fixture
 def mock_credential():
     """A fake credential for testing."""

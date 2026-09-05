@@ -175,9 +175,11 @@ def test_get_credential_write_rejects_missing_bili_jct():
     saved = Credential(sessdata="saved", bili_jct="")
     with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
          patch("bili_cli.auth._extract_browser_credential", return_value=None), \
+         patch("bili_cli.auth.clear_credential") as mock_clear, \
          patch("bili_cli.auth._validate_credential", return_value=False):
         cred = get_credential(mode="write")
         assert cred is None
+        mock_clear.assert_called_once()
 
 
 def test_extract_browser_credential_timeout_returns_none():
