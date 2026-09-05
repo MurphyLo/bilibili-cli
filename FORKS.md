@@ -99,8 +99,8 @@ git fetch --all
 
 | Fork | 最后 push | 分支 | ahead | HEAD | 状态 |
 |---|---|---|---|---|---|
-| [cestivan](https://github.com/cestivan/bilibili-cli) | 2026-08-25 | `fix/qr-login-tv-channel` | +3 | `9e99be3` | 待评估（PR #29） |
-| [ZeroMarker](https://github.com/ZeroMarker/bilibili-cli) | 2026-08-17 | `main` | +1 | `6962d5b` | 待评估（PR #27） |
+| [cestivan](https://github.com/cestivan/bilibili-cli) | 2026-08-25 | `fix/qr-login-tv-channel` | +3 | `9e99be3` | ✅ 已引入（取净效果） |
+| [ZeroMarker](https://github.com/ZeroMarker/bilibili-cli) | 2026-08-17 | `main` | +1 | `6962d5b` | ❌ 否决（与 cestivan 同案，择一） |
 | [annoft](https://github.com/annoft/bilibili-cli) | 2026-08-08 | `main` | +7 | `bb60136` | 部分引入，其余否决 |
 | [Gqingbo](https://github.com/Gqingbo/bilibili-cli) | 2026-08-05 | `main` | +21 | `809967d` | 部分引入，多数不适用 |
 | [n1qzhao](https://github.com/n1qzhao/bilibili-cli) | 2026-07-15 | `feature/video-pages` | +2 | `9e3ed7a` | 待评估 |
@@ -141,6 +141,17 @@ git fetch --all
 
 三条标 ⚠️ 的**没有实测证据**，只是代码逻辑上说得通。如果日后在这些区域 debug，先怀疑它们。
 
+## 已引入（2026-09-06，Unreleased）
+
+| 本仓库 | 来源 | 上游 PR/issue | 验证情况 |
+|---|---|---|---|
+| `165e0c7` | 改编自 `cestivan@8111162` `@9e99be3` | PR #29 | ✅ 实测 `bili login` 六个字段齐全 |
+| `d268d55` | 自研 | — | ✅ `bili video` 412 消失，点赞/投币与 bilibili-api 直查一致 |
+| `5023c32` | 自研 | — | ✅ 哨兵文件验证测试不再删真实凭据 |
+
+`165e0c7` 取的是 cestivan 分支的**净效果**而非逐条 cherry-pick —— 该分支首个提交 `5faf032`
+走 TV QR 通道（已否决），`8111162` 又把它回退了，只有最终状态可用。
+
 ---
 
 ## 已否决（不要重复评估）
@@ -148,6 +159,8 @@ git fetch --all
 | 提交 | 来源 | 否决原因 |
 |---|---|---|
 | `a71660e` | annoft | TV QR 登录通道。cestivan 在 PR #29 独立尝试过同一思路，随后自己用 `8111162` 回退成 web QR Set-Cookie —— 说明这条路走不通 |
+| `5faf032` | cestivan | 同上，TV QR 通道。作者自己用 `8111162` 回退掉了，引入时已跳过这条只取净效果 |
+| `6962d5b` | ZeroMarker | web QR crossDomain + Set-Cookie（PR #27）。诊断与 cestivan 完全一致、方案等价，三家比完后择一，选了 cestivan（多 `_enrich_credential_buvids()` 补 buvid3/4，对 412 有额外价值，且已实测跑通）。ZeroMarker 的测试更厚（+241），日后登录再出问题可回来取用 |
 | `8d24636` `5d05661` `118b647` `70cbbc8` | annoft | 浏览器凭据刷新的一系列改进（含 Thorium 支持）。**与本 fork 方向冲突**：`893a2f8` 已经把浏览器 cookie 扫描整个从默认路径摘掉了，这几条是在优化一条我们不再走的路 |
 | `bb60136` | annoft | 只是 annoft 自己的 release v0.6.3 版本号提交，与我们的版本线无关 |
 | `c53daa0` | HawkW1027 | Chromium 支持 + 登录流程改动，同样属于浏览器凭据提取方向，与 `893a2f8` 冲突 |
@@ -166,8 +179,6 @@ git fetch --all
 
 | 提交 | 来源 | 内容 | 备注 |
 |---|---|---|---|
-| `6962d5b` | ZeroMarker `main` | QR 登录支持 B 站 crossDomain 响应格式 | PR #27。登录目前没坏，属于「B 站改接口后会需要」的预备件 —— 真出问题时第一个来这里拿 |
-| `5faf032` `8111162` `9e99be3` | cestivan `fix/qr-login-tv-channel` | web QR Set-Cookie 登录策略 | PR #29。注意读提交顺序：作者先试 TV QR（`5faf032`）再自己回退（`8111162`），**最终方案是第二个**，别只看第一条 |
 | `29bfef9` | guowenfh `main` | `feed` 命令补全动态详情 | PR #9 |
 | `d0f6595` | guowenfh `fix/subtitle-output` | 字幕结构化输出格式修正，去掉冗余 `items` 字段 | PR #10。会改输出 schema，注意 `SCHEMA.md` 同步 |
 
@@ -184,7 +195,7 @@ git fetch --all
 | `26888fb` `d281658` | Chesszyh `feature-video-download` | 视频下载 + 原始流解析。与 Pigletzzz 的下载功能**二选一**，需要先比对两套实现 |
 | `9c6c5aa` `ef5e569` `974ac81` | Gqingbo `main` | YAML 持久化配置模块。基础设施类改动，会影响面较大，引入前想清楚是否需要 |
 | `8913d53` | Hi-Zi-Li `main` | stream-curator 集成 |
-| `8e0f0a1` | Gqingbo `main` | QR 登录 SSO ticket 交换 + 多页字幕。**和 cestivan/ZeroMarker 的登录改动是同一问题域**，三者应该放在一起比较后择一 |
+| `8e0f0a1` | Gqingbo `main` | 多页字幕（`page_index`）。同提交里的 QR 登录部分已由 cestivan 方案覆盖，**只取字幕部分**，需要拆分 |
 
 ---
 
@@ -198,7 +209,8 @@ git fetch --all
    休眠代码保留在 `bili_cli/auth.py` 里，日后若要做成 opt-in 可以复用。
 2. **输出 schema 是对外契约。** 改动 YAML/JSON 字段要同步 `SCHEMA.md`，并留意本仓库自己加的
    `charging_exclusive` / `charging_type` / `charging_badge` 三个字段。
-3. **登录相关的三个 fork 互斥。** ZeroMarker、cestivan、Gqingbo 各有一套 QR 登录修复，解决的是
-   同一类问题。要动登录，一次性比完三家再决定，不要逐个 cherry-pick。
+3. **登录方案已定案（2026-09-06）：cestivan 的 web QR Set-Cookie。** ZeroMarker、cestivan、
+   Gqingbo 三家的 QR 登录修复已比完，结论记在「已否决」表里。日后登录再坏，先看 `auth.py` 的
+   `qr_login()` 是否还匹配 B 站当前的 poll 响应，不要重新逐个评估这三家。
 4. **依赖要克制。** 这是给 agent 用的 CLI，装机成本敏感。Selenium、faster-whisper 这类重依赖
    不引入。

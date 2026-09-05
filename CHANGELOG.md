@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `bili login` no longer saves an empty credential. Bilibili's web QR poll may
+  return a ticket URL whose query string carries no `SESSDATA`; the real cookies
+  now arrive via `Set-Cookie` on the poll response. Login reads those headers
+  (falling back to following the login URL), refuses to save a credential
+  without `SESSDATA`, and fills in `buvid3`/`buvid4`
+  (adapted from cestivan@8111162 and @9e99be3, upstream PR #29)
+- `video` no longer fails with HTTP 412: the main `x/web-interface/view` request
+  passed `credential=None` unconditionally, so it was always anonymous — the
+  same defect fixed for `user-videos` in 0.7.0. Bilibili now rejects anonymous
+  calls to this endpoint; a `buvid3`-only cookie is not enough, `SESSDATA` is
+  required
+- The test suite no longer deletes the developer's real
+  `~/.bilibili-cli/credential.json`. `test_get_credential_write_rejects_missing_bili_jct`
+  mocked `_validate_credential` into returning `False` without also mocking
+  `clear_credential`, so `get_credential()` took the expired-credential branch
+  and unlinked the actual file. A `conftest.py` fixture now redirects
+  `CONFIG_DIR`/`CREDENTIAL_FILE` to `tmp_path` for every test
+
 ## 0.7.0
 
 Fork release. Upstream `public-clis/bilibili-cli` has had no commits since
