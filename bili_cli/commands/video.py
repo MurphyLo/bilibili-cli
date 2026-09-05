@@ -43,11 +43,10 @@ def video(
     output_format = common.resolve_output_format(as_json=as_json, as_yaml=as_yaml)
 
     bvid = common.extract_bvid_or_exit(bv_or_url)
-    needs_optional_cred = subtitle or subtitle_timeline or comments or ai or related
-    cred = common.get_credential(mode="optional") if needs_optional_cred else None
+    cred = common.get_credential(mode="optional")
 
     info = common.run_or_exit(
-        client.get_video_info(bvid, credential=None),
+        client.get_video_info(bvid, credential=cred),
         "获取视频信息失败",
     )
 

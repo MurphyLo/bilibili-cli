@@ -153,14 +153,16 @@ def test_video_display(runner, mock_video_info):
         assert "BV1test123" in result.output
 
 
-def test_video_does_not_load_optional_credential_when_no_optional_section(runner, mock_video_info):
-    with patch("bili_cli.commands.common.get_credential", return_value=None) as mock_get_cred, \
+def test_video_passes_credential_to_main_request(runner, mock_video_info):
+    """x/web-interface/view 拒绝匿名调用（412），主请求必须带上凭证。"""
+    cred = object()
+    with patch("bili_cli.commands.common.get_credential", return_value=cred) as mock_get_cred, \
          patch("bili_cli.client.extract_bvid", return_value="BV1test123"), \
          patch("bili_cli.client.get_video_info", new_callable=AsyncMock, return_value=mock_video_info) as mock_get_info:
         result = runner.invoke(cli, ["video", "BV1test123"])
         assert result.exit_code == 0
-        mock_get_cred.assert_not_called()
-        mock_get_info.assert_awaited_once_with("BV1test123", credential=None)
+        mock_get_cred.assert_called_once_with(mode="optional")
+        mock_get_info.assert_awaited_once_with("BV1test123", credential=cred)
 
 
 def test_video_uses_optional_credential_mode_when_needed(runner, mock_video_info):
